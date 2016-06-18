@@ -166,19 +166,67 @@ def drawnode(draw, clust, x, y, scaling, labels):
 		
 		drawnode(draw, clust.left, x+ll, top + h1/2, scaling, labels)
 		drawnode(draw, clust.right, x+ll, bottom - h2/2, scaling, labels)
-	
+
+# K means algorithm
+import random
+def kcluster(rows, distance = pearson, k = 4):
+	ranges = [(min([row[i] for row in rows]),\
+		   max([row[i] for row in rows]))\
+		   for i in range(len(rows[0]))]
+
+	# create k randomly placed centroids
+	clusters = [[random.random()*(ranges[i][1] - ranges[i][0])+ \
+		     ranges[i][0] for i in range(len(rows[0]))] \
+		     for j in range(k)]
+
+	lastmatches = None
+	for t in range(1024):
+		bestmatches = [[] for i in range(k)]
+
+		# find the closest centroids for each row
+		for j in range(len(rows)):
+			row = rows[j]
+			bestmatch = 0
+			for i in range(k):
+				d = distance(clusters[i], row)
+				if d < distance(clusters[bestmatch], row):
+					bestmatch = i
+			bestmatches[bestmatch].append(j)
+
+		# check the end
+		if bestmatches == lastmatches:
+			break
+		lastmatches = bestmatches
+
+		# Move the centroids to the average of their members
+		for i in range(k):
+			avgs = [0.0] * len(rows[0])
+			if len(bestmatches[i]) > 0:
+				for rowid in bestmatches[i]:
+					for m in range(len(rows[rowid])):
+						avgs[m] += rows[rowid][m]
+				for j in range(len(avgs)):
+					avgs[j] /= len(bestmatches[i])
+				clusters[i] = avgs
+
+	return bestmatches
 
 # test
 blognames, words, data = readfile('blogdata.txt')
 clust = hcluster(data)
-
 printclust(clust, blognames)
-
 drawdendrogram(clust, blognames, jpeg = 'blogclust.jpeg')
+
+# k means
+k = 3 
+kclust = kcluster(data, k = k)
+print [[blognames[r] for r in kclust[i]] for i in range(k)] 
 
 # from column view
 blognames, words, data = readfile('blogdata.txt')
 transdata = rotatematrix(data)
 newclust = hcluster(transdata)
 drawdendrogram(newclust, labels = words, jpeg = 'wordsclust.jpeg')
+
+
 

@@ -220,6 +220,63 @@ def kcluster(rows, distance = pearson, k = 4):
 
 	return bestmatches
 
+# multidimensional scaling
+def scaledown(data, distance = pearson, rate = 0.01):
+	n = len(data)
+
+	realdist = [[distance(data[i], data[j]) for j in range(n)] \
+			for i in range(0,n)]
+	outersum = 0.0
+	# randomly initialize the starting points of the locations in 2D
+	loc = [[random.random(), random.random()] for i in range(n)]
+	fakedist = [[0.0 for j in range(n)] for i in range(n)]
+
+	lasterror = None
+	for m in range(0, 1000):
+		# find projected distances
+		for i in range(n):
+			for j in range(n):
+				fakedist[i][j] = sqrt(sum(
+					[pow(loc[i][x] - loc[j][x], 2) \
+					for x in range(len(loc[i]))]))
+		# Move points
+		grad = [ [0.0, 0.0] for i in range(n)]
+
+		totalerror = 0
+		for k in range(n):
+			for j in range(n):
+				if j == k: 
+					continue
+		# The error is percent differnece between the distances
+				errorterm =(fakedist[j][k]  \
+						-realdist[j][k])/realdist[j][k]
+
+				grad[k][0]+=((loc[k][0]-loc[j][0])/fakedist[j][k])*\
+						errorterm
+				grad[k][1]+=((loc[k][1]-loc[j][1])/fakedist[j][k])*\
+						errorterm
+
+				totalerror += abs(errorterm)
+		print totalerror
+
+		if lasterror and lasterror < totalerror:
+			break
+		lasterror = totalerror
+
+		for k in range(n):
+			loc[k][0] -= rate*grad[k][0]
+			loc[k][1] -= rate*grad[k][1]
+	return loc
+
+def draw2d(data, labels, jpeg = 'mds2d.jpg'):
+	img = Image.new('RGB', (2000, 2000), (255, 255, 255))
+	draw = ImageDraw.Draw(img)
+	for i in range(len(data)):
+		x = (data[i][0] + 0.5)*1000
+		y = (data[i][0] + 0.5)*1000
+		draw.text((x,y), labels[i], (0,0,0))
+	img.save(jpeg, 'JPEG')
+
 # test
 blognames, words, data = readfile('blogdata.txt')
 clust = hcluster(data)
@@ -242,3 +299,7 @@ wants, people, data = readfile('zebo.txt')
 clust = hcluster(data, distance = tanimoto)
 drawdendrogram(clust, wants, jpeg = 'zebo.jpeg')
 
+# multidimensional scaling
+blognames, words, data = readfile('blogdata.txt')
+coords = scaledown(data)
+draw2d(coords, blognames, jpeg = 'blogds2d.jpg')

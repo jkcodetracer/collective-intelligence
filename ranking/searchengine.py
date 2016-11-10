@@ -329,9 +329,12 @@ class searcher:
 
 pagelist = ['http://www.sina.com.cn/']
 
+# 1 use spide to get some information
 #crawler = crawler('sina.db')
 #crawler.createindextables()
 #crawler.crawl(pagelist)
+
+# 2 query some keywords
 #e = searcher('sina.db')
 #print e.getmatchrows('coffee imdb')
 #print e.query('coffee imdb')
@@ -341,6 +344,7 @@ pagelist = ['http://www.sina.com.cn/']
 #testA =  [(tests[0],0) for tests in test]
 #print testA
 
+# 3 build the page rank database
 crawler = crawler('sina.db')
 crawler.calculatepagerank()
 crawler.dumppagerank()

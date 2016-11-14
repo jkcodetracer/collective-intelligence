@@ -116,7 +116,7 @@ def hillclimb(domain, costf):
 			break;
 	return sol;
 
-def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
+def annealingoptimize(domain, costf, T=1000.0, cool=0.98, step=1):
 	# Initialize the values randomly
 	vec = [random.randint(domain[i][0], domain[i][1]) \
 		for i in range(len(domain))]
@@ -137,12 +137,15 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
 		# compare the cost
 		ea = costf(vec)
 		eb = costf(vecb)
-		# simulated annealing
-		p = pow(math.e, (-eb-ea)/T)
 
 		# is it better, or make the probability
-		if (eb < ea or random.random() < p):
+		if eb < ea:
 			vec = vecb
+		else:
+			# simulated annealing
+			p = pow(math.e, -(eb-ea)/T)
+			if random.random() < p:
+				vec = vecb
 
 		T = T*cool
 	return vec

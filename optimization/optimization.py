@@ -20,12 +20,13 @@ def getminutes(t):
 
 def printschedule(r):
 	d = 0
-	while (d < len(r)):
+	while d < len(r):
+		print d
 		name = people[d/2][0]
 		origin = people[d/2][1]
 		out = flight[(origin, destination)][r[d]]
 		ret = flight[(destination, origin)][r[d+1]]
-		print '%10s%10s %5s-%5s $%3s %5s-%5s $%3s' % \
+		print '%10s%10s %5s-%5s $%3s %5s-%5s $%3s |' % \
 			(name, origin, out[0], out[1], out[2], \
 			ret[0], ret[1], ret[2])
 		d += 2
@@ -150,6 +151,76 @@ def annealingoptimize(domain, costf, T=1000.0, cool=0.98, step=1):
 		T = T*cool
 	return vec
 
+class genetic:
+	def __init__(self):
+		pass
+
+	def __del__(self):
+		pass
+
+	# someone can mutate.
+	def mutate(self, vec, domain, step = 1):
+		i = random.randint(0, len(domain)-1)
+		if random.random() < 0.5:
+			step *= -1
+		tmp = vec[i] + step
+
+		if tmp < domain[i][0]:
+			tmp = domain[i][1]
+		elif tmp > domain[i][1]:
+			tmp = domain[i][0]
+
+		return vec[0:i]+[tmp]+vec[i+1:]
+
+	# people can breed a new generation
+	def crossover(self, r1, r2, domain):
+		i = random.randint(1, len(domain)-2)
+		return r1[0:i]+r2[i:]
+
+	# the main genetic function
+	# popsize: the size of population
+	# mutprob: the possiblily of mutation
+	# elite: the fraction of the good solution of each generation
+	# maxiter: how many generation
+	def geneticoptimize(self, domain, costf, popsize = 50, step = 1,\
+			mutprob = 0.2, elite = 0.2, maxiter = 100):
+		# build the population
+		pop = []
+		for i in range(popsize):
+			vec = [random.randint(domain[j][0], domain[j][1]) \
+				for j in range(len(domain))]
+			pop.append(vec)
+
+		# how many winners from each generation?
+		topelite = int(elite*popsize)
+
+		# optimize the group
+		# the max generation is maxiter
+		scores = []
+		for i in range(maxiter):
+			#print pop
+			scores = [(costf(v), v) for v in pop]
+			scores.sort()
+			ranked = [v for (s,v) in scores]
+
+			pop = ranked[0:topelite]
+			while len(pop) < popsize:
+				if random.random() < mutprob:
+					# mutation
+					c = random.randint(0, topelite-1)
+					pop.append(self.mutate(pop[c], \
+						domain, step))
+				else:
+					# crossover
+					c1 = random.randint(0, topelite-1)
+					c2 = random.randint(0, topelite-1)
+					pop.append(self.crossover(pop[c1],\
+						pop[c2], domain))
+
+		scores = [(costf(v), v) for v in pop]
+		scores.sort()
+		return scores[0][1]
+
 
 
 flight = {}
@@ -167,7 +238,7 @@ domain = [(0,8)]*(len(people)*2)
 s = randomoptimize(domain, schedulecost)
 print '--- test random ---'
 print schedulecost(s)
-print printschedule(s)
+printschedule(s)
 
 print '--- test hillclimb ---'
 s = hillclimb(domain, schedulecost)
@@ -180,3 +251,8 @@ s = annealingoptimize(domain, schedulecost)
 print schedulecost(s)
 printschedule(s)
 
+print '--- test genetic optmize ---'
+gen = genetic()
+s = gen.geneticoptimize(domain, schedulecost)
+print schedulecost(s)
+printschedule(s)

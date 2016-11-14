@@ -118,7 +118,7 @@ def hillclimb(domain, costf):
 
 def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
 	# Initialize the values randomly
-	vec = [float(random.randint(domain[i][0], domain[i][1])) \
+	vec = [random.randint(domain[i][0], domain[i][1]) \
 		for i in range(len(domain))]
 
 	while T>0.1:
@@ -128,7 +128,7 @@ def annealingoptimize(domain, costf, T=10000.0, cool=0.95, step=1):
 		dif = random.randint(-step, step)
 		# create a new values
 		vecb = vec[:]
-		vecb[i] += dir
+		vecb[i] += dif
 		if vecb[i] < domain[i][0]:
 			vecb[i] = domain[i][0]
 		elif vecb[i] > domain[i][1]:
@@ -172,4 +172,8 @@ print schedulecost(s)
 printschedule(s)
 
 
+print '--- test simulated annealing ---'
+s = annealingoptimize(domain, schedulecost)
+print schedulecost(s)
+printschedule(s)
 

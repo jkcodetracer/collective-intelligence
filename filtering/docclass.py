@@ -137,6 +137,29 @@ class naivebayes(classifier):
 		return p
 
 class fisherclassifier(classifier):
+
+	def __init__(self, getfeatures):
+		classifier.__init__(self, getfeatures)
+		self.minimums = {}
+
+	def setminimum(self, cat, min):
+		self.minimums[cat] = min
+
+	def getminimum(self, cat):
+		if cat not in self.minimums:
+			return 0
+		return self.minimums[cat]
+
+	def classify(self, item, default=None):
+		best = default
+		max = 0.0
+		for c in self.categories():
+			p = self.fisherprob(item, c)
+			if p > self.getminimum(c) and p > max:
+				best = c
+				max = p
+		return best
+
 	# P(category|feature) 
 	def cprob(self, f, cat):
 		# the frequency of this feature in this category
@@ -164,6 +187,7 @@ class fisherclassifier(classifier):
 			sum += term
 		return min(sum, 1.0)
 
+	# the fisher's method, check wikipedia
 	def fisherprob(self, item, cat):
 		# multiply all the probabilities together
 		p = 1
@@ -214,5 +238,11 @@ print fi.weightedprob('money', 'bad', fi.cprob)
 print fi.fisherprob('quick rabbit', 'good')
 print fi.fisherprob('quick rabbit', 'bad')
 
+print fi.classify('quick rabbit')
+print fi.classify('quick money')
+fi.setminimum('bad', 0.8)
+print fi.classify('quick money')
+fi.setminimum('good', 0.4)
+print fi.classify('quick money')
 
 

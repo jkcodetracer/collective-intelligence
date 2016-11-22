@@ -86,6 +86,56 @@ class classifier:
 		bp = ((weight*ap) + (totals*basicprob))/(weight+totals)
 		return bp
 
+class naivebayes(classifier):
+	def __init__(self, getfeatures):
+		classifier.__init__(self, getfeatures)
+		self.thresholds= {}
+
+	def setthreshold(self, cat, t):
+		self.thresholds[cat] = t
+
+	def getthreshold(self, cat):
+		if cat not in self.thresholds:
+			return 1.0
+		return self.thresholds[cat]
+
+	def classify(self, item, default = None):
+		probs = {}
+		# find the category with the highest probability
+		max = 0.0
+		for cat in self.categories():
+			probs[cat] = self.prob(item, cat)
+			if probs[cat] > max:
+				max = probs[cat]
+				best = cat
+		# make sure the probability exceed threshold*next
+		for cat in probs:
+			if cat == best:
+				continue
+			if probs[cat]*self.getthreshold(best)>probs[best]:
+				return default
+		return best
+
+	# calculate the P(category|document)
+	# p(category|document) = 
+	#	P(document|category) * P(category)/P(document)
+	# we can ignore the P(document), because all the documents 
+	# have the same possilibity.
+	def prob(self, item, cat):
+		catprob = self.catcount(cat)/self.totalcount()
+		docprob = self.docprob(item, cat)
+		return docprob * catprob
+
+	# P(document|category) = P(wordA|category)*P(wordB|category)...
+	def docprob(self, item, cat):
+		features = self.getfeatures(item)
+
+		p = 1
+		for f in features:
+			# P(wordX|caeory)
+			p *= self.weightedprob(f, cat, self.fprob)
+		return p
+
 
 # test simple word
 cl = classifier(getwords)
@@ -99,4 +149,19 @@ print cl.fprob('quick', 'good')
 print cl.weightedprob('money', 'good', cl.fprob)
 sampletrain(cl)
 print cl.weightedprob('money', 'good', cl.fprob)
+
+print '--- test naivebayes ---'
+nb = naivebayes(getwords)
+sampletrain(nb)
+print nb.prob('quick rabbit', 'good')
+print nb.prob('quick rabbit', 'bad')
+print nb.classify('quick rabbit', default='unknown')
+print nb.classify('quick money', default='unknown')
+nb.setthreshold('bad', 3.0)
+print nb.classify('quick money', default='unknown')
+for i in range(10):
+	sampletrain(nb)
+print nb.classify('quick money', default = 'unknown')
+
+
 

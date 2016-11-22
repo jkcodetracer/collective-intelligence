@@ -136,6 +136,47 @@ class naivebayes(classifier):
 			p *= self.weightedprob(f, cat, self.fprob)
 		return p
 
+class fisherclassifier(classifier):
+	# P(category|feature) 
+	def cprob(self, f, cat):
+		# the frequency of this feature in this category
+		# P(feature|category)
+		clf = self.fprob(f, cat)
+		if clf == 0:
+			return 0
+
+		# The frequency of this feature in all the categories
+		# sum(P(feature|category A), P(feature|category B)...)
+		freqsum = sum([self.fprob(f,c) for c in self.categories()])
+
+		# The probability is the frequency in this category divided 
+		# by the overall frequency
+		# P = P(feature|category)/sum(P(feature|category A), P(B)...)
+		p = clf/(freqsum)
+
+		return p
+
+	def invchi2(self, chi, df):
+		m = chi/2.0
+		sum = term = math.exp(-m)
+		for i in range(1, df//2):
+			term *= m/i
+			sum += term
+		return min(sum, 1.0)
+
+	def fisherprob(self, item, cat):
+		# multiply all the probabilities together
+		p = 1
+		features = self.getfeatures(item)
+		for f in features:
+			p *= self.weightedprob(f,cat,self.cprob)
+
+		# take the natural log and multiply by -2
+		fscore = -2*math.log(p)
+
+		# use the inverse chi2 function to get a probability
+		return self.invchi2(fscore, len(features)*2)
+
 
 # test simple word
 cl = classifier(getwords)
@@ -162,6 +203,16 @@ print nb.classify('quick money', default='unknown')
 for i in range(10):
 	sampletrain(nb)
 print nb.classify('quick money', default = 'unknown')
+
+
+print '--- test fisher method ---'
+fi = fisherclassifier(getwords)
+sampletrain(fi)
+print fi.cprob('quick', 'good')
+print fi.cprob('money', 'bad')
+print fi.weightedprob('money', 'bad', fi.cprob)
+print fi.fisherprob('quick rabbit', 'good')
+print fi.fisherprob('quick rabbit', 'bad')
 
 
 

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+from PIL import Image, ImageDraw
+
 my_data =[['slashdot','USA','yes',18,'None'],
 	['google','France','yes',23,'Premium'],
 	['digg','USA','yes',24,'Basic'],
@@ -119,6 +121,50 @@ def printtree(tree, indent = ''):
 		print indent + 'F->', 
 		printtree(tree.fb, indent + ' ')
 
+def getwidth(tree):
+	if tree.tb == None and tree.fb == None:
+		return 1
+	else:
+		return getwidth(tree.tb) + getwidth(tree.fb)
+
+def getdepth(tree):
+	if tree.tb == None and tree.fb == None:
+		return 1
+	else:
+		return max(getdepth(tree.fb), getdepth(tree.tb)) + 1
+
+def drawnode(draw, tree, x,y):
+	if tree.results == None:
+		# get the width of each branch 
+		w1 = getwidth(tree.fb)*100
+		w2 = getwidth(tree.tb)*100
+
+		# determine the needed space
+		left = x-(w1+w2)/2
+		right = x+(w1+w2)/2
+
+		draw.text((x-20, y-10), str(tree.col)+':'+str(tree.value),
+				(0,0,0))
+
+		draw.line((x,y,left+w1/2,y+100), fill = (255,0,0))
+		draw.line((x,y,right-w2/2,y+100), fill = (255,0,0))
+
+		drawnode(draw, tree.fb, left+w1/2, y+100)
+		drawnode(draw, tree.tb, right-w2/2, y+100)
+	else:
+		txt = ' \n'.join(['%s:%d'%v for v in tree.results.items()])
+		draw.text((x-20,y), txt, (0,0,0))
+
+def drawtree(tree, jpeg = 'tree.jpg'):
+	w = getwidth(tree)*100
+	h = getdepth(tree)*100
+
+	img = Image.new('RGB', (w,h), (255,255,255))
+	draw = ImageDraw.Draw(img)
+
+	drawnode(draw, tree, w/2, 20)
+	img.save(jpeg, 'JPEG')
+
 
 class decisionnode:
 	def __init__(self, col=-1, value=None, 
@@ -142,4 +188,5 @@ print giniimpurity(set1)
 print '--- test decision tree---'
 my_tree = buildtree(my_data)
 printtree(my_tree)
+drawtree(my_tree)
 

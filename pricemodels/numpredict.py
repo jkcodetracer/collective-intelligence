@@ -58,6 +58,33 @@ def knnestimate(data, vec1, k=3):
 	avg = avg/k
 	return avg
 
+def inverseweight(dist, num = 1.0, const = 0.1):
+	return num/(dist+const)
+
+def subtractweight(dist, const = 1.0):
+	if dist > const:
+		return 0
+	else:
+		return const-dist
+
+def gaussian(dist, sigma = 1.0):
+	return math.e**(-1*(dist**2)/(2*(sigma**2)))
+
+def weightedknn(data, vec1, k=5, weightf=gaussian):
+	dlist = getdistances(data, vec1)
+	avg = 0.0
+	totalweight = 0.0
+
+	for i in range(k):
+		dist = dlist[i][0]
+		idx = dlist[i][1]
+		weight = weightf(dist)
+		avg += weight*data[idx]['result']
+		totalweight += weight
+	avg = avg/totalweight
+	return avg
+
+
 print wineprice(95.0, 3.0)
 print wineprice(95.0, 8.0)
 print wineprice(99.0, 1.0)
@@ -71,5 +98,18 @@ print knnestimate(data, (99.0, 3.0))
 print knnestimate(data, (99.0, 5.0))
 print wineprice(99.0, 5.0)
 print knnestimate(data, (99.0, 5.0), k=1)
+
+print '---test weight function---'
+print subtractweight(0.1)
+print inverseweight(0.1)
+print gaussian(0.1)
+print gaussian(1.0)
+print subtractweight(1)
+print inverseweight(1)
+print gaussian(3.0)
+print "---test weight knn---"
+print weightedknn(data, (95.0, 3.0))
+print weightedknn(data, (99.0, 3.0))
+print weightedknn(data, (99.0, 5.0))
 
 

@@ -84,6 +84,39 @@ def weightedknn(data, vec1, k=5, weightf=gaussian):
 	avg = avg/totalweight
 	return avg
 
+# for cross-validation
+def dividedata(data, test = 0.05):
+	trainset = []
+	testset = []
+	for row in data:
+		if random() < 0.05:
+			testset.append(row)
+		else:
+			trainset.append(row)
+	return trainset, testset
+
+def testalgorithm(algf, trainset, testset):
+	error = 0.0
+	for row in testset:
+		guess = algf(trainset, row['input'])
+		error += (row['result']-guess)**2
+	# get the variation
+	return error/len(testset)
+
+def crossvalidate(algf, data, trials = 100, test=0.05):
+	error = 0.0
+	for  i in range(trials):
+		trainset,testset = dividedata(data,test)
+		error += testalgorithm(algf,trainset,testset)
+
+	return error/trials
+
+def knn3(d,v):
+	return knnestimate(d,v,k=3)
+
+def knn1(d,v):
+	return knnestimate(d,v,k=1)
+
 
 print wineprice(95.0, 3.0)
 print wineprice(95.0, 8.0)
@@ -112,4 +145,7 @@ print weightedknn(data, (95.0, 3.0))
 print weightedknn(data, (99.0, 3.0))
 print weightedknn(data, (99.0, 5.0))
 
+print '--- test cross validation --- '
+print crossvalidate(knn3,data)
+print crossvalidate(knn1,data)
 

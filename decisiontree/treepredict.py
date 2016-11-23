@@ -70,6 +70,26 @@ def uniquecounts(rows):
 
 	return results
 
+def prune(tree, mingain):
+	# if not leaves, then prune them
+	if tree.fb.results == None:
+		prune(tree.fb, mingain)
+	if tree.tb.results == None:
+		prune(tree.tb, mingain)
+	
+	if tree.tb.results != None and tree.fb.results != None:
+		tb,fb = [],[]
+		for v,c in tree.tb.results.items():
+			tb += [[v]]*c
+		for v,c in tree.fb.results.items():
+			fb += [[v]]*c
+
+		delta = entropy(tb+fb)-(entropy(tb)+entropy(fb))/2
+
+		if delta < mingain:
+			tree.tb, tree.fb = None, None
+			tree.results = uniquecounts(tb+fb)
+
 def buildtree(rows, scoref = entropy):
 	if len(rows) == 0:
 		return decisionnode()
@@ -184,6 +204,38 @@ def classify(observation, tree):
 				branch = tree.fb
 	return classify(observation, branch)
 
+def mdclassify(observation, tree):
+	if tree.results != None:
+		return tree.results
+	else:
+		v = observation[tree.col]
+		if v == None:
+			tr,fr = mdclassify(observation, tree.tb), mdclassify(observation, tree.fb)
+			tcount = sum(tr.values())
+			fcount = sum(fr.values())
+			tw = float(tcount)/(tcount+fcount)
+			fw = float(fcount)/(tcount+fcount)
+			result = {}
+			for k,v in tr.items():
+				result[k] = v*tw
+			for k,v in fr.items():
+				result[k] = v*fw
+
+			return result
+		else:
+			if isinstance(v, int) or isinstance(v, float):
+				if v >= tree.value:
+					branch = tree.tb
+				else:
+					branch = tree.fb
+			else:
+				if v == tree.value:
+					branch = tree.tb
+				else:
+					branch = tree.fb
+			return mdclassify(observation, branch)
+
+
 class decisionnode:
 	def __init__(self, col=-1, value=None, 
 			results=None, tb=None, fb=None):
@@ -208,4 +260,11 @@ my_tree = buildtree(my_data)
 printtree(my_tree)
 drawtree(my_tree)
 print classify(['(direct)', 'USA', 'yes', 5], my_tree)
+print '--- test mdclassify----'
+print mdclassify(['google', None, 'yes', None], my_tree)
+print mdclassify(['google', 'France', None, None], my_tree)
+print '--- test prune tree---'
+prune(my_tree, 1.0)
+printtree(my_tree)
+
 

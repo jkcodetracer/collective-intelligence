@@ -153,6 +153,24 @@ def createcostf(algf, data):
 		return crossvalidate(algf, sdata, trials = 1)
 	return costf
 
+def probguess(data, vec1, low, high, k = 5, weightf = gaussian):
+	dlist = getdistances(data, vec1)
+	nweight = 0.0
+	tweight = 0.0
+
+	for i in range(k):
+		dist = dlist[i][0]
+		idx = dlist[i][1]
+		weight = weightf(dist)
+		v = data[idx]['result']
+
+		if v >= low and v <= high:
+			nweight += weight
+		tweight += weight
+	if tweight == 0:
+		return 0
+	return nweight/tweight
+
 print wineprice(95.0, 3.0)
 print wineprice(95.0, 8.0)
 print wineprice(99.0, 1.0)
@@ -180,6 +198,12 @@ print weightedknn(data, (95.0, 3.0))
 print weightedknn(data, (99.0, 3.0))
 print weightedknn(data, (99.0, 5.0))
 
+print "---test probability guess---"
+print probguess(data, [99,20], 40,80)
+print probguess(data, [99,20], 80,120)
+print probguess(data, [99,20], 120,1000)
+print probguess(data, [99,20], 80,240)
+
 print '--- test cross validation --- '
 print crossvalidate(knn3,data)
 print crossvalidate(knn1,data)
@@ -195,7 +219,7 @@ print crossvalidate(knn3, rescaleddata)
 print crossvalidate(weightedknn, rescaleddata)
 
 
-
+'''
 sys.path.append('/Users/codetracer/JustForFun/AI/collective_intelligence/optimization')
 import optimization
 
@@ -214,5 +238,6 @@ s = gen.geneticoptimize(domain, costf)
 print s
 rescaleddata = rescale(heterogeneous, s)
 print crossvalidate(weightedknn, rescaleddata)
+'''
 
 

@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from random import random, randint
+from pylab import *
 import math
 import sys
 
@@ -171,6 +172,31 @@ def probguess(data, vec1, low, high, k = 5, weightf = gaussian):
 		return 0
 	return nweight/tweight
 
+def cumulativegraph(data, vec1, high, k=5, weightf=gaussian):
+	t1 = arange(0.0, high, 0.1)
+	cprob = array([probguess(data, vec1, 0, v, k, weightf) for v in t1])
+	plot(t1, cprob)
+	show()
+
+def probabilitygraph(data, vec1, high, k=5, weightf = gaussian, ss=2.0):
+	t1 = arange(0.0, high, 0.1)
+
+	probs = [probguess(data, vec1, v, v+0.1, k, weightf) for v in t1]
+
+	# smooth them by adding the gaussian of the nearby probabilities
+	smoothed = []
+	for i in range(len(probs)):
+		sv = 0.0
+		for j in range(len(probs)):
+			dist = abs(i-j) * 0.1
+			weight = gaussian(dist, sigma = ss)
+			sv += weight*probs[j]
+		smoothed.append(sv)
+	smoothed = array(smoothed)
+
+	plot(t1, smoothed)
+	show()
+
 print wineprice(95.0, 3.0)
 print wineprice(95.0, 8.0)
 print wineprice(99.0, 1.0)
@@ -203,6 +229,9 @@ print probguess(data, [99,20], 40,80)
 print probguess(data, [99,20], 80,120)
 print probguess(data, [99,20], 120,1000)
 print probguess(data, [99,20], 80,240)
+
+cumulativegraph(data, [95,20], 150)
+probabilitygraph(data, [95,20], 150)
 
 print '--- test cross validation --- '
 print crossvalidate(knn3,data)

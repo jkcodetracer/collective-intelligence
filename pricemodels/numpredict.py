@@ -3,6 +3,14 @@
 from random import random, randint
 import math
 
+def rescale(data, scale):
+	scaleddata = []
+	for row in data:
+		scaled = [scale[i]*row['input'][i] for i in range(len(scale))]
+		scaleddata.append({'input':scaled, 'result':row['result']})
+
+	return scaleddata
+
 def euclidean(v1, v2):
 	d = 0.0
 	for i in range(len(v1)):
@@ -36,6 +44,20 @@ def wineset1():
 		rows.append({'input':(rating,age),
 			'result':price})
 
+	return rows
+
+def wineset2():
+	rows = []
+	for i in range(300):
+		rating = random()*50+50
+		age = random()*50
+		aisle = float(randint(1,20))
+		bottlesize = [375.0, 750.0, 1500.0, 3000.0][randint(0,3)]
+		price = wineprice(rating, age)
+		price *= (bottlesize/750)
+		price *= (random()*0.9+0.2)
+		rows.append({'input':(rating, age, aisle,bottlesize),
+			'result':price})
 	return rows
 
 def getdistances(data, vec1):
@@ -148,4 +170,16 @@ print weightedknn(data, (99.0, 5.0))
 print '--- test cross validation --- '
 print crossvalidate(knn3,data)
 print crossvalidate(knn1,data)
+
+print '--- test heterogeneous valuables---'
+heterogeneous = wineset2()
+print crossvalidate(knn3, heterogeneous)
+print crossvalidate(weightedknn, heterogeneous)
+
+print '--- test rescale ---'
+rescaleddata = rescale(heterogeneous, [1,1,0,0.25])
+print crossvalidate(knn3, rescaleddata)
+print crossvalidate(weightedknn, rescaleddata)
+
+
 

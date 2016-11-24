@@ -2,6 +2,7 @@
 
 from random import random, randint
 import math
+import sys
 
 def rescale(data, scale):
 	scaleddata = []
@@ -95,15 +96,22 @@ def gaussian(dist, sigma = 1.0):
 def weightedknn(data, vec1, k=5, weightf=gaussian):
 	dlist = getdistances(data, vec1)
 	avg = 0.0
+	total = 0.0
 	totalweight = 0.0
 
 	for i in range(k):
 		dist = dlist[i][0]
 		idx = dlist[i][1]
+		total += dist
 		weight = weightf(dist)
+		if weight == 0.0:
+			continue
 		avg += weight*data[idx]['result']
 		totalweight += weight
-	avg = avg/totalweight
+	if totalweight == 0.0:
+		avg = total/k
+	else:
+		avg = avg/totalweight
 	return avg
 
 # for cross-validation
@@ -139,6 +147,11 @@ def knn3(d,v):
 def knn1(d,v):
 	return knnestimate(d,v,k=1)
 
+def createcostf(algf, data):
+	def costf(scale):
+		sdata = rescale(data, scale)
+		return crossvalidate(algf, sdata, trials = 1)
+	return costf
 
 print wineprice(95.0, 3.0)
 print wineprice(95.0, 8.0)
@@ -181,5 +194,25 @@ rescaleddata = rescale(heterogeneous, [1,1,0,0.25])
 print crossvalidate(knn3, rescaleddata)
 print crossvalidate(weightedknn, rescaleddata)
 
+
+
+sys.path.append('/Users/codetracer/JustForFun/AI/collective_intelligence/optimization')
+import optimization
+
+print '--- optimization with annealing---'
+costf = createcostf(weightedknn, heterogeneous)
+domain = [(0,20)]*4
+s = optimization.annealingoptimize(domain, costf)
+print s
+rescaleddata = rescale(heterogeneous, s)
+print crossvalidate(weightedknn, rescaleddata)
+
+print '--- optimization with genetic---'
+costf = createcostf(weightedknn, heterogeneous)
+gen = optimization.genetic()
+s = gen.geneticoptimize(domain, costf)
+print s
+rescaleddata = rescale(heterogeneous, s)
+print crossvalidate(weightedknn, rescaleddata)
 
 

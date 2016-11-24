@@ -222,14 +222,13 @@ class genetic:
 		return scores[0][1]
 
 
-
+'''
 flight = {}
 for line in file('schedule.txt'):
 	origin,dest,depart,arrive,price = line.strip().split(',')
 	flight.setdefault((origin,dest), [])
 
 	flight[(origin,dest)].append((depart, arrive, int(price)))
-'''
 s = [1,4,3,2,7,3,6,3,2,4,5,3]
 printschedule(s)
 print schedulecost(s)

@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import math 
+
 class matchrow:
 	def __init__(self, row, allnum=False):
 		if allnum:
@@ -108,6 +110,50 @@ def dpclassify(point, avgs):
 	else:
 		return 1
 
+# the kernel mehod
+def veclength(vec):
+	return math.sqrt(sum([v*v for v in vec]))
+
+# radial-basis function
+def rbf(v1, v2, gamma = 20):
+	dv = [v1[i] - v2[i] for i in range(len(v1)) ]
+	l = veclength(dv)
+	return math.e**(-gamma*l)
+
+def nlclassify(point, rows, offset, gamma = 10):
+	sum0 = 0.0
+	sum1 = 0.0
+	count0 = 0
+	count1 = 0
+
+	for row in rows:
+		if row.match == 0:
+			sum0 += rbf(point, row.data, gamma)
+			count0 += 1
+		else:
+			sum1 += rbf(point, row.data, gamma)
+			count1 += 1
+	y = (1.0/count0)*sum0 - (1.0/count1)*sum1 + offset
+
+	if y > 0:
+		return 0
+	else:
+		return 1
+
+def getoffset(rows, gamma = 10):
+	l0 = []
+	l1 = []
+
+	for row in rows:
+		if row.match == 0:
+			l0.append(row.data)
+		else:
+			l1.append(row.data)
+	sum0 = sum(sum([rbf(v1, v2, gamma) for v1 in l0]) for v2 in l0)
+	sum1 = sum(sum([rbf(v1, v2, gamma) for v1 in l1]) for v2 in l1)
+
+	return (1.0/(len(l1)**2)) * sum1 - (1.0/(len(l0)**2))*sum0
+
 agesonly = loadmatch('agesonly.csv', allnum = True)
 matchmaker = loadmatch('matchmaker.csv')
 avgs = lineartrain(agesonly)
@@ -129,4 +175,34 @@ print numericalset[0].match
 print dpclassify(scalef(numericalset[0].data), avgs)
 print numericalset[11].match
 print dpclassify(scalef(numericalset[11].data), avgs)
+
+
+print '--- test non linear ---'
+offset = getoffset(agesonly)
+print nlclassify([30,30], agesonly, offset)
+print nlclassify([30,25], agesonly, offset)
+print nlclassify([25,40], agesonly, offset)
+print nlclassify([48,20], agesonly, offset)
+
+print '--- test non linear after scale ---'
+ssoffset = getoffset(scaledataset)
+scaledset = scaledataset
+print 'original: ', numericalset[0].match
+print nlclassify(scalef(numericalset[0].data), scaledset, ssoffset)
+
+print 'original: ', numericalset[1].match
+print nlclassify(scalef(numericalset[1].data), scaledset, ssoffset)
+
+print 'original: ', numericalset[2].match
+print nlclassify(scalef(numericalset[2].data), scaledset, ssoffset)
+
+# Man doesn't want children, woman does
+newrow = [28.9, -1,-1,26.0,-1,1,2,0.8]
+print newrow
+print nlclassify(scalef(newrow), scaledset, ssoffset)
+# Both want children
+newrow = [28.0, -1, 1, 26.0, -1,1,2,0.8]
+print newrow
+print nlclassify(scalef(newrow), scaledset, ssoffset)
+
 

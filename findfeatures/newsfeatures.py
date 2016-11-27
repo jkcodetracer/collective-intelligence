@@ -3,6 +3,7 @@
 import feedparser
 import re
 import nmf
+import numpy
 
 feedlist = ['http://feeds.bbci.co.uk/news/world/rss.xml',
 	'https://news.google.com/news?hl=en&gl=us&q=news&um=1&ie=UTF-8&output=rss',
@@ -70,6 +71,40 @@ def makematrix(allw, articlew):
 
 	return l1, wordvec
 
+def showfeatures(w,h,titles, wordvec, out = 'features.txt'):
+	outfile = file(out, 'w')
+	pc,wc = shape(h)
+	toppatterns = [[] for i in range(len(titles))]
+	patternnames = []
+
+	# loop over all the features
+	for i in range(pc):
+		slist = []
+
+		for j in range(wc):
+			slist.append((h[i,j], wordvec[j]))
+		slist.sort()
+		slist.reverse()
+
+		n = [s[1] for s in slist[0:6]]
+		outfile.write(str(n) + '\n')
+		patternnames.append(n)
+
+		flist = []
+		for j in range(len(titles)):
+			flist.append((w[j,i], titles[j]))
+			toppatterns[j].append((w[j,i], i, titles[j]))
+
+		flist.sort()
+		flist.reverse()
+
+		for f in flist[0:3]:
+			outfile.write(str(f)+'\n')
+		outfile.write('\n')
+	outfile.close()
+
+	return toppatterns, patternnames
+
 
 print '--- test word vec---'
 allw,artw,artt = getarticlewords()
@@ -78,4 +113,5 @@ print wordvec[0:10]
 print artt[1]
 print wordmatrix[1][0:100]
 
+weights, feat = nmf.factorize(wordmatrix, pc = 20, iter=50)
 

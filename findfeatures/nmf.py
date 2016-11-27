@@ -46,7 +46,7 @@ def factorize(v, pc = 10, iter = 50):
 	
 	return w,h
 
-
+'''
 print '--- test nmf---'
 m1 = matrix([[1,2,3], [4,5,6]])
 m2 = matrix([[1,2],[3,4],[5,6]])
@@ -55,4 +55,5 @@ print m1,m2
 w,h = factorize(m1*m2, pc = 3, iter = 100)
 print w*h
 print m1*m2
+'''
 

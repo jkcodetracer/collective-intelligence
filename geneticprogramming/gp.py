@@ -82,6 +82,34 @@ def makerandomtree(pc, maxdepth = 4, fpr = 0.5, ppr = 0.6):
 	else:
 		return constnode(randint(0, 10))
 
+def hiddenfunction(x,y):
+	return x**2 + 2*y + 3*x + 5
+
+def buildhiddenset():
+	rows = []
+	for i in range(200):
+		x = randint(0,40)
+		y = randint(0,40)
+		rows.append([x,y,hiddenfunction(x,y)])
+	return rows
+
+# cost function
+def scorefunction(tree, s):
+	dif = 0
+	for data in s:
+		v = tree.evaluate([data[0],data[1]])
+		dif += abs(v-data[2])
+	return dif
+
+def mutate(t, pc, probchange = 0.1):
+	if random() < probchange:
+		return makerandomtree(pc)
+	else:
+		result = deepcopy(t)
+		if isinstance(t, node):
+			result.children = [mutate(c, pc, probchange) \
+				for c in t.children]
+		return result
 
 # example
 def exampletree():
@@ -105,5 +133,9 @@ print random1.evaluate([2,4])
 random2 = makerandomtree(2)
 print random2.evaluate([5,3])
 print random2.evaluate([5,20])
+print '--- test mutate ---'
+muttree = mutate(random2, 2)
+muttree.display()
+
 
 

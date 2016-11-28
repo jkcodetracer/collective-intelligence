@@ -111,6 +111,16 @@ def mutate(t, pc, probchange = 0.1):
 				for c in t.children]
 		return result
 
+def crossover(t1, t2, probswap = 0.7, top = 1):
+	if random() < probswap and not top:
+		return deepcopy(t2)
+	else:
+		result = deepcopy(t1)
+		if isinstance(t1, node) and isinstance(t2, node):
+			result.children = [crossover(c, choice(t2.children),\
+				probswap, 0) for c in t1.children]
+		return result
+
 # example
 def exampletree():
 	return node(ifw, [
@@ -136,6 +146,8 @@ print random2.evaluate([5,20])
 print '--- test mutate ---'
 muttree = mutate(random2, 2)
 muttree.display()
-
+print '--- test cross ---'
+cross = crossover(random1, random2)
+cross.display()
 
 

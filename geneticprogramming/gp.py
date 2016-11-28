@@ -17,7 +17,7 @@ class node:
 		self.function = fw.function
 		self.name = fw.name
 		self.children = children
-	
+
 	def evaluate(self, inp):
 		results = [n.evaluate(inp) for n in self.children]
 		return self.function(results)
@@ -121,6 +121,113 @@ def crossover(t1, t2, probswap = 0.7, top = 1):
 				probswap, 0) for c in t1.children]
 		return result
 
+def getrankfunction(dataset):
+	def rankfunction(population):
+		scores = [(scorefunction(t, dataset), t) for t in population]
+		scores.sort()
+		return scores
+	return rankfunction
+
+def evolve(pc, popsize, rankfunction, maxgen = 500,
+	mutationrate = 0.1, breedingrate = 0.4, pexp = 0.7, pnew = 0.05):
+
+	# return a random number, tending towards lower numbers.
+	# The lower pexp is, more lower numbers you will get.
+	def selectindex():
+		return int(log(random())/log(pexp))
+
+	# create a random initial population
+	population = [makerandomtree(pc) for i in range(popsize)]
+	for i in range(maxgen):
+		scores = rankfunction(population)
+		print scores[0][0]
+		if scores[0][0] == 0:
+			break
+
+		newpop = [scores[0][1], scores[1][1]]
+		while len(newpop) < popsize:
+			if random() > pnew:
+				newpop.append(mutate(
+					crossover(scores[selectindex()][1],
+						scores[selectindex()][1],
+						probswap = breedingrate),
+					pc, probchange = mutationrate))
+			else:
+				newpop.append(makerandomtree(pc))
+		population = newpop
+	scores[0][1].display()
+	return scores[0][1]
+
+def gridgame(p):
+	max = (3,3)
+
+	# remember the last move for each player
+	lastmove = [-1, -1]
+
+	# remember the player's location
+	location = [[randint(0, max[0]), randint(0,max[1])]]
+
+	# another player
+	location.append([(location[0][0]+2)%4, (location[0][1]+2)%4])
+	for o in range(50):
+
+		# for each player
+		for i in range(2):
+			locs = location[i][:] + location[1-i][:]
+			locs.append(lastmove[i])
+			move = p[i].evaluate(locs)%4
+
+			# You lose if ou move the same direction twice in a row
+			if lastmove[i] == move:
+				return 1-i
+			lastmove[i] = move
+			if move == 0:
+				location[i][0]-=1
+				if location[i][0] < 0:
+					location[i][0] = 0
+	 		if move == 1:
+				location[i][0] += 1
+				if location[i][0] > max[0]:
+					location[i][0] = max[0]
+
+			if move == 2:
+				location[i][1] -= 1
+				if location[i][1] < 0:
+					location[i][1] = 0
+
+			if move == 3:
+				location[i][1] += 1
+				if location[i][1] > max[1]:
+					location[i][1] = max[1]
+
+			if location[i] == location[1-i]:
+				return i
+	return -1
+
+def tournament(pl):
+	losses = [0 for p in pl]
+
+	# each player plays with each other
+	for i in range(len(pl)):
+		for j in range(len(pl)):
+			if i == j:
+				continue
+
+			winner = gridgame([pl[i], pl[j]])
+			if winner == 0:
+				losses[j] += 2
+			elif winner == 1:
+				losses[i] += 2
+			elif winner == -1:
+				losses[i] += 1
+				losses[j] += 1
+				pass
+
+	z = zip(losses, pl)
+	z.sort()
+
+	return z
+
 # example
 def exampletree():
 	return node(ifw, [
@@ -149,5 +256,20 @@ muttree.display()
 print '--- test cross ---'
 cross = crossover(random1, random2)
 cross.display()
+'''
+print '--- test environment ---'
+rf = getrankfunction(buildhiddenset())
+print evolve(2, 500, rf, mutationrate = 0.2, breedingrate = 0.1, \
+		pexp = 0.7, pnew = 0.1)
+'''
+
+print '--- test gridgame ---'
+p1 = makerandomtree(5)
+p2 = makerandomtree(5)
+print gridgame([p1,p2])
+
+print '--- grid game evolve---'
+winner = evolve(5, 100, tournament, maxgen = 50)
+winner.display()
 
 
